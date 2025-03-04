@@ -9,11 +9,13 @@
             font-family: Arial, sans-serif;
         }
         .chat-container {
-            width: 50%;
+            width: 90%; /* Adjusted to 90% to make it almost full screen */
             margin: 0 auto;
             padding: 20px;
             border: 1px solid #ccc;
             border-radius: 5px;
+            resize: both;
+            overflow: auto;
         }
         .chat-box {
             width: 100%;
@@ -23,7 +25,6 @@
             overflow-y: scroll;
             padding: 10px;
             margin-bottom: 10px;
-            resize: both;
         }
         .chat-input {
             width: calc(100% - 22px);
@@ -49,194 +50,78 @@
     </style>
 </head>
 <body>
-<div class = "header">
-    <h1>Benvenuto nella pagina di informazioni</h1>
-    <p>Questa pagina è stata creata per fornire informazioni sui politici censiti nel database</p>
-    </div>
+<div class="header">
+    <h1 style="text-align: center;">Chat Bot</h1>
+    <p>Questa pagina è stata creata per fornire informazioni inerenti ai files pdf caricati</p>
+</div>
 <div class="chat-container">
     <div class="chat-box" id="chatBox"></div>
     <input type="text" id="chatInput" class="chat-input" placeholder="Type your message here...">
     <button class="chat-button" onclick="sendMessage()">Send</button>
 </div>
+<div class="file-upload-container">
+    <h3>Upload PDF</h3>
+    <input type="file" id="pdfFile" accept="application/pdf">
+    <button class="chat-button" onclick="uploadPdf()">Upload</button>
+</div>
 <div class="footer">
-    <p>Per ottenere informazioni sui politici censiti nel database, inserisci la tua domanda nel campo di testo e premi il pulsante "Send".</p>
-<h3>Domande di esempio:</h3>
-<ul>
-    <li>informazioni su ALFIERI ALESSANDRO</li>
-    <li>mi puoi fornire la data di nascita di ALMICI CRISTINA</li>
-    <li>mi fornisci il numero di utenti che hanno come ente di appartenenza SENATO DELLA REPUBBLICA</li>
-</ul>
-<div class="example-requests">
-    <h3>Persone censite su cui è possibile effettuare le ricerche</h3>
-    <table>
-        <thead>
-        <tr>
-            <th>COGNOME</th>
-            <th>NOME</th>
-            <th>DATA NASCITA (gg/mm/aaaa)</th>
-            <th>LUOGO NASCITA</th>
-            <th>PROVINCIA NASCITA</th>
-            <th>DATA FINE CONTROLLO (gg/mm/aaaa)</th>
-            <th>ENTE DI APPARTENENZA</th>
-            <th>RUOLO</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr>
-            <td>ABODI</td>
-            <td>ANDREA</td>
-            <td>07/03/1960</td>
-            <td>ROMA</td>
-            <td>RM</td>
-            <td>31/12/2030</td>
-            <td>MINISTERO PER LO SPORT E I GIOVANI</td>
-            <td>MINISTRO</td>
-        </tr>
-        <tr>
-            <td>ACQUAROLI</td>
-            <td>FRANCESCO</td>
-            <td>25/09/1974</td>
-            <td>MACERATA</td>
-            <td>MC</td>
-            <td>31/12/2030</td>
-            <td>REGIONE MARCHE</td>
-            <td>PRESIDENTE</td>
-        </tr>
-        <tr>
-            <td>AIELLO</td>
-            <td>DAVIDE</td>
-            <td>31/10/1985</td>
-            <td>PALERMO</td>
-            <td>PA</td>
-            <td>31/12/2030</td>
-            <td>CAMERA DEI DEPUTATI</td>
-            <td>DEPUTATO</td>
-        </tr>
-        <tr>
-            <td>ALBANO</td>
-            <td>LUCIA</td>
-            <td>11/02/1965</td>
-            <td>SAN BENEDETTO DEL TRONTO</td>
-            <td>AP</td>
-            <td>31/12/2030</td>
-            <td>Ministero dell'Economia e delle Finanze</td>
-            <td>SOTTOSEGRETARIO DI STATO</td>
-        </tr>
-        <tr>
-            <td>ALBANO</td>
-            <td>LUCIA</td>
-            <td>11/02/1965</td>
-            <td>SAN BENEDETTO DEL TRONTO</td>
-            <td>AP</td>
-            <td>31/12/2030</td>
-            <td>CAMERA DEI DEPUTATI</td>
-            <td>DEPUTATO</td>
-        </tr>
-        <tr>
-            <td>ALBERTI CASELLATI</td>
-            <td>ELISABETTA</td>
-            <td>12/08/1946</td>
-            <td>ROVIGO</td>
-            <td>RO</td>
-            <td>31/12/2030</td>
-            <td>MINISTERO PER LE RIFORME ISTITUZIONALI E LA SEMPLIFICAZIONE NORMATIVA</td>
-            <td>MINISTRO</td>
-        </tr>
-        <tr>
-            <td>ALBERTI CASELLATI</td>
-            <td>MARIA ELISABETTA</td>
-            <td>12/08/1946</td>
-            <td>ROVIGO</td>
-            <td>RO</td>
-            <td>31/12/2030</td>
-            <td>SENATO DELLA REPUBBLICA</td>
-            <td>SENATORE</td>
-        </tr>
-        <tr>
-            <td>ALFIERI</td>
-            <td>ALESSANDRO</td>
-            <td>02/02/1972</td>
-            <td>VARESE</td>
-            <td>VA</td>
-            <td>31/12/2030</td>
-            <td>SENATO DELLA REPUBBLICA</td>
-            <td>SENATORE</td>
-        </tr>
-        <tr>
-            <td>ALIFANO</td>
-            <td>ENRICA</td>
-            <td>31/01/1967</td>
-            <td>CASERTA</td>
-            <td>CE</td>
-            <td>31/12/2030</td>
-            <td>CAMERA DEI DEPUTATI</td>
-            <td>DEPUTATO</td>
-        </tr>
-        <tr>
-            <td>ALMICI</td>
-            <td>CRISTINA</td>
-            <td>26/06/1969</td>
-            <td>BRESCIA</td>
-            <td>BS</td>
-            <td>31/12/2030</td>
-            <td>CAMERA DEI DEPUTATI</td>
-            <td>DEPUTATO</td>
-        </tr>
-        <tr>
-            <td>ALOISIO</td>
-            <td>VINCENZA</td>
-            <td>15/12/1946</td>
-            <td>MURO LUCANO</td>
-            <td>PZ</td>
-            <td>31/12/2030</td>
-            <td>SENATO DELLA REPUBBLICA</td>
-            <td>SENATORE</td>
-        </tr>
-        <tr>
-            <td>CENNAMO</td>
-            <td>MIRCO</td>
-            <td>05/04/1982</td>
-            <td>SALERNO</td>
-            <td>SA</td>
-            <td>31/12/2050</td>
-            <td>CASA MIA</td>
-            <td>SENATORE</td>
-        </tr>
-        </tbody>
-    </table>
-
+    <p>Per ottenere informazioni, inserisci la tua domanda nel campo di testo e premi
+        il pulsante "Send".</p>
+    <p>N.B. Hardware limitato;I tempi di risposta potrebbero essere molto lunghi <b>(fino a 5 minuti)</b></p>
 </div>
 
 
+    <script>
+        async function sendMessage() {
+            const message = document.getElementById('chatInput').value;
+            if (!message) return;
 
-
-<script>
-    async function sendMessage() {
-        const message = document.getElementById('chatInput').value;
-        if (!message) return;
-
-        const chatBox = document.getElementById('chatBox');
-        chatBox.innerHTML += `<div><strong>You:</strong> ${message}</div>`;
-
-        try {
-            const response = await fetch('http://localhost:8080/info?message=' + encodeURIComponent(message), {
-                method: 'GET',
-                headers: {
-                    'Accept': '*/*'
+            const chatBox = document.getElementById('chatBox');
+            chatBox.innerHTML += `<div><strong>You:</strong> ${message}</div>`;
+             document.getElementById('chatInput').value = '';
+            try {
+                const response = await fetch('http://localhost:8080/info?question=' + encodeURIComponent(message), {
+                    method: 'GET',
+                    headers: {
+                        'Accept': '*/*'
+                    }
+                });
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
                 }
-            });
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
+                const data = await response.text();
+                chatBox.innerHTML += `<div><strong>Bot:</strong> ${data}</div>`;
+            } catch (error) {
+                chatBox.innerHTML += `<div><strong>Error:</strong> ${error.message}</div>`;
             }
-            const data = await response.text();
-            chatBox.innerHTML += `<div><strong>Bot:</strong> ${data}</div>`;
-        } catch (error) {
-            chatBox.innerHTML += `<div><strong>Error:</strong> ${error.message}</div>`;
+
+             document.getElementById('chatInput').value = '';
+            chatBox.scrollTop = chatBox.scrollHeight;
         }
 
-        document.getElementById('chatInput').value = '';
-        chatBox.scrollTop = chatBox.scrollHeight;
-    }
-</script>
+        async function uploadPdf() {
+            const fileInput = document.getElementById('pdfFile');
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('http://localhost:8080/uploadPdf', {
+                    method: 'POST',
+                    body: formData
+                });
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const data = await response.text();
+                alert('File uploaded and processed successfully!');
+            } catch (error) {
+                alert('Failed to upload and process file: ' + error.message);
+            }
+        }
+    </script>
+</div>
 </body>
 </html>

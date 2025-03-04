@@ -1,25 +1,16 @@
 package it.interno.ai.repository;
 
-import it.interno.ai.model.PPEDistro;
-import it.interno.ai.tools.PersonaPoliticamenteEspostaGeneratorTools;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.reader.JsonReader;
-import org.springframework.ai.transformer.splitter.TokenTextSplitter;
 import org.springframework.ai.vectorstore.VectorStore;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
-import org.springframework.ai.vectorstore.SearchRequest;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,7 +30,7 @@ public class PPEDocumentsRepository {
         this.resourceLoader = resourceLoader;
     }
 
-    @PostConstruct
+   // @PostConstruct
     public void savePPE() throws IOException {
         log.info("start savePPE");
         Map<String, Object> metadata = new HashMap<>();
@@ -55,22 +46,5 @@ public class PPEDocumentsRepository {
 
 
 
-    /*public List<PPEDistro> findSimilarDocuments(String searchText) {
-        return vectorStore
-                .similaritySearch(SearchRequest.builder()
-                        .query(searchText)
-                        .similarityThreshold(0.87)
-                        .topK(10)
-                        .build())
-                .stream()
-                .map(document -> {
-                    PPEDistro wikiDocument = new PPEDistro();
-                    wikiDocument.setFilePath((String) document.getMetadata().get("filePath"));
-                    wikiDocument.setContent(document.getFormattedContent());
-                    return wikiDocument;
-                })
-                .toList();
-    }
 
-     */
 }

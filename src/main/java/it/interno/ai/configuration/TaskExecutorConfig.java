@@ -7,6 +7,8 @@ package it.interno.ai.configuration;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.task.TaskExecutor;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -19,7 +21,7 @@ public class TaskExecutorConfig {
         return Executors.newFixedThreadPool(10); // Adjust the pool size as needed
     }
 
-  /*  @Bean
+    @Bean
     public TaskExecutor taskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setThreadFactory(Thread.ofVirtual().factory());
@@ -31,5 +33,5 @@ public class TaskExecutorConfig {
         return executor;
     }
 
-   */
+
 }

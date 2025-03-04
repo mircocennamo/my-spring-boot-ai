@@ -14,14 +14,14 @@ import java.time.LocalDate;
  * @project spring-into-ai
  */
 @Component
-public class PersonaPoliticamenteEspostaGeneratorTools {
+public class GeneratorTools {
 
 
-    private static final Logger log = LoggerFactory.getLogger(PersonaPoliticamenteEspostaGeneratorTools.class);
+    private static final Logger log = LoggerFactory.getLogger(GeneratorTools.class);
 
 
     @Autowired
-    public PersonaPoliticamenteEspostaGeneratorTools() {
+    public GeneratorTools() {
 
     }
 

@@ -52,10 +52,10 @@ public class PPEController {
             file.transferTo(convFile);
             documentService.ingestPDF(new FileSystemResource(convFile));
 
-            return ResponseEntity.ok().body("File uploaded and processed successfully!");
+            return ResponseEntity.ok().body("File caricato e processato!");
         } catch (IOException e) {
             log.error(e.getMessage());
-            return ResponseEntity.internalServerError().body("Failed to upload and process file.");
+            return ResponseEntity.internalServerError().body("Errore nel caricamento e nel processamento del file");
         }
     }
 

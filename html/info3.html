@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Info Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+        }
+        .header, .footer {
+            background-color: #007BFF;
+            color: white;
+            text-align: center;
+            padding: 10px 0;
+        }
+        .header h1, .footer p {
+            margin: 0;
+        }
+        .container {
+            display: flex;
+            width: 90%;
+            margin: 20px auto;
+        }
+        .file-list {
+            width: 30%;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            margin-right: 20px;
+        }
+        .chat-container {
+            width: 80%;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            resize: both;
+            overflow: auto;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .chat-box {
+            width: 100%;
+            height: 300px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            overflow-y: scroll;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #f9f9f9;
+        }
+        .chat-box div {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .chat-box div:nth-child(odd) {
+            background-color: #e1f5fe;
+        }
+        .chat-box div:nth-child(even) {
+            background-color: #fff9c4;
+        }
+        .chat-input {
+            width: calc(100% - 22px);
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        .chat-button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007BFF;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .chat-button:hover {
+            background-color: #0056b3;
+        }
+        .chat-button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .file-upload-container {
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .example-requests {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+<div class="header">
+    <h1 style="text-align: center;">Chat Bot</h1>
+    <p>Questa pagina è stata creata per fornire informazioni inerenti ai files pdf caricati</p>
+</div>
+<div class="container">
+    <div class="file-list" id="fileList">
+        <h3>Uploaded Files</h3>
+    </div>
+    <div class="chat-container">
+        <div class="chat-box" id="chatBox"></div>
+        <input type="text" id="chatInput" class="chat-input" placeholder="Type your message here...">
+        <button class="chat-button" onclick="sendMessage()">Send</button>
+    </div>
+</div>
+<div class="file-upload-container">
+    <h3>Upload PDF</h3>
+    <input type="file" id="pdfFile" accept="application/pdf" onchange="enableUploadButton()">
+    <button class="chat-button" id="uploadButton" onclick="uploadPdf()" disabled>Upload</button>
+</div>
+<div class="footer">
+    <p>Per ottenere informazioni, inserisci la tua domanda nel campo di testo e premi
+        il pulsante "Send".</p>
+    <p>N.B. grandezza massima del file 10 MB</p>
+    <p>Hardware limitato;I tempi di risposta potrebbero essere molto lunghi <b>(fino a 5 minuti)</b></p>
+</div>
+
+<script>
+    function getCurrentDateTime() {
+     const now = new Date();
+     return now.toLocaleString();
+ }
+
+ async function sendMessage() {
+     const message = document.getElementById('chatInput').value;
+     if (!message) return;
+
+     const chatBox = document.getElementById('chatBox');
+     const requestDateTime = getCurrentDateTime();
+     chatBox.innerHTML += `<div><strong>You:</strong> ${message} <span style="float:right;">${requestDateTime}</span></div>`;
+     document.getElementById('chatInput').value = '';
+     try {
+         const response = await fetch('http://localhost:8080/info?question=' + encodeURIComponent(message), {
+             method: 'GET',
+             headers: {
+                 'Accept': '*/*'
+             }
+         });
+         if (!response.ok) {
+             throw new Error('Network response was not ok');
+         }
+         const data = await response.text();
+         const responseDateTime = getCurrentDateTime();
+         chatBox.innerHTML += `<div><strong>Bot:</strong> ${data} <span style="float:right;">${responseDateTime}</span></div>`;
+     } catch (error) {
+         const responseDateTime = getCurrentDateTime();
+         chatBox.innerHTML += `<div><strong>Error:</strong> ${error.message} <span style="float:right;">${responseDateTime}</span></div>`;
+     }
+
+     document.getElementById('chatInput').value = '';
+     chatBox.scrollTop = chatBox.scrollHeight;
+ }
+
+     function enableUploadButton() {
+         const fileInput = document.getElementById('pdfFile');
+         const uploadButton = document.getElementById('uploadButton');
+         uploadButton.disabled = !fileInput.files.length;
+     }
+
+     async function uploadPdf() {
+         const fileInput = document.getElementById('pdfFile');
+         const file = fileInput.files[0];
+         if (!file) return;
+
+         const formData = new FormData();
+         formData.append('file', file);
+
+         try {
+             const response = await fetch('http://localhost:8080/uploadPdf', {
+                 method: 'POST',
+                 body: formData
+             });
+             if (!response.ok) {
+                 throw new Error('Network response was not ok');
+             }
+             const data = await response.text();
+             alert('File uploaded and processed successfully!');
+
+             // Append the file name and date/time to the file list
+             const fileList = document.getElementById('fileList');
+             const dateTime = getCurrentDateTime();
+             fileList.innerHTML += `<div>${file.name} <span style="float:right;">${dateTime}</span></div>`;
+         } catch (error) {
+             alert('Failed to upload and process file: ' + error.message);
+         }
+     }
+</script>
+</body>
+</html>

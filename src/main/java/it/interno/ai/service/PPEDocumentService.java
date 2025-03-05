@@ -33,7 +33,7 @@ public class PPEDocumentService {
                 .defaultAdvisors(
                         new PromptChatMemoryAdvisor(chatMemory),
                         new SimpleLoggerAdvisor())
-                .defaultTools(generatorTools)
+                //.defaultTools(generatorTools)
                 .build();
         this.vectorStore = vectorStore;
 
@@ -72,6 +72,7 @@ public class PPEDocumentService {
                 Utilizza le informazioni della sezione DOCUMENTI per fornire risposte precise alle
                 domanda nella sezione DOMANDE.
                  Se non sei sicuro, dichiara semplicemente che non lo sai.
+                 Rispondi sempre in italiano
 
 
        DOCUMENTI:

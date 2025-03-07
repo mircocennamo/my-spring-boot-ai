@@ -1,5 +1,6 @@
 package it.interno.ai.model;
 
+import it.interno.ai.annotations.FieldDescription;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -14,7 +15,9 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Motivazione {
+    @FieldDescription("Motivazione della richiesta")
     private String motivazione;
 
+    @FieldDescription("Motivazione estesa della richiesta")
     private String motivazioneEstesa;
 }

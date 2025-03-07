@@ -1,5 +1,6 @@
 package it.interno.ai.model;
 
+import it.interno.ai.annotations.FieldDescription;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -14,9 +15,12 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Comandante {
+    @FieldDescription("ID del comandante")
     private String idComandante;
 
+    @FieldDescription("Cognome del comandante")
     private String cognomeComandante;
 
+    @FieldDescription("Nome del comandante")
     private String nomeComandante;
 }

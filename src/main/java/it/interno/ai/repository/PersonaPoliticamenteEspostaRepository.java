@@ -5,9 +5,9 @@ package it.interno.ai.repository;
  * @project my-spring-boot-ai
  */
 
-import it.interno.ai.model.PersonaPoliticamenteEsposta;
+import it.interno.ai.model.Utente;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
-public interface PersonaPoliticamenteEspostaRepository extends MongoRepository<PersonaPoliticamenteEsposta, String> {
+public interface PersonaPoliticamenteEspostaRepository extends MongoRepository<Utente, String> {
 
 }

@@ -1,5 +1,6 @@
 package it.interno.ai.model;
 
+import it.interno.ai.annotations.FieldDescription;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -14,6 +15,9 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Applicazione {
+    @FieldDescription("Nome dell'applicazione web")
     private String applicazioneWeb;
+
+    @FieldDescription("Nome dell'applicazione chiamante")
     private String applicazioneChiamante;
 }

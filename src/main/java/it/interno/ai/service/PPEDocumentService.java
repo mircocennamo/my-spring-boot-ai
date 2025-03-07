@@ -1,10 +1,9 @@
 package it.interno.ai.service;
 
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import it.interno.ai.model.*;
 import it.interno.ai.tools.GeneratorTools;
+import it.interno.ai.utils.ContextFilter;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.slf4j.Logger;
@@ -13,7 +12,6 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.reader.pdf.PagePdfDocumentReader;
-import org.springframework.ai.transformer.splitter.TextSplitter;
 import org.springframework.ai.transformer.splitter.TokenTextSplitter;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
@@ -25,7 +23,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static it.interno.ai.utils.BeanToDocumentConverter.convertToDocumentList;
 
@@ -65,7 +62,7 @@ public class PPEDocumentService {
     }
 
     public void ingestExcel(Resource resource) throws IOException {
-        List<PersonaPoliticamenteEsposta> documents = readExcelFile2(resource);
+        List<Utente> documents = readExcelFile2(resource);
 
         // Sending batch of documents to vector store
         // applying tokenizer
@@ -95,8 +92,8 @@ public class PPEDocumentService {
     }
 
 
-    public List<PersonaPoliticamenteEsposta>  readExcelFile2(Resource resource) throws IOException {
-        List<PersonaPoliticamenteEsposta> results = new ArrayList<>();
+    public List<Utente>  readExcelFile2(Resource resource) throws IOException {
+        List<Utente> results = new ArrayList<>();
 
 
         try (InputStream inputStream = resource.getInputStream();
@@ -105,10 +102,10 @@ public class PPEDocumentService {
             Sheet sheet = workbook.getSheetAt(0);
             for (Row row : sheet) {
                 if (row.getRowNum() == 0) continue; // Skip header row
-                PersonaPoliticamenteEsposta ppe = new PersonaPoliticamenteEsposta();
+                Utente ppe = new Utente();
                 ppe.setIdUtente(row.getCell(0).getStringCellValue());
-                ppe.setCognome(row.getCell(1).getStringCellValue());
-                ppe.setNome(row.getCell(2).getStringCellValue());
+                ppe.setCognomeUtente(row.getCell(1).getStringCellValue());
+                ppe.setNomeUtente(row.getCell(2).getStringCellValue());
                 Ufficio ufficio = new Ufficio();
                 ppe.setUfficio(ufficio);
                 ppe.getUfficio().setIdUfficio(row.getCell(3).getStringCellValue());
@@ -143,7 +140,14 @@ public class PPEDocumentService {
     }
 
 
-
+    private String formatJsonContext(List<Document> context) {
+        StringBuilder sb = new StringBuilder();
+        int count = 1;
+        for (Document json : context) {
+            sb.append(count++).append(". ").append(json.toString()).append("\n");
+        }
+        return sb.toString();
+    }
 
 
 
@@ -151,26 +155,83 @@ public class PPEDocumentService {
     public String queryLLM(String question) {
 
 
-        // Querying the vector store for documents related to the question
+        //1. Querying the vector store for documents related to the question
         List<Document> vectorStoreResult =
                vectorStore.similaritySearch(SearchRequest.builder().query(question)
+                        .topK(5).similarityThreshold(0.6)
                         //.topK(50).similarityThreshold(1)
                        .build());
+
+        log.info(
+                "vectorStoreResult: {}",
+                vectorStoreResult
+        );
 
 
         // Merging the documents into a single string
         assert vectorStoreResult != null;
-        String documents = vectorStoreResult.stream()
-                .map(Document::getText)
-                .collect(Collectors.joining(System.lineSeparator()));
+
+        // 2. Filtra e normalizza il contesto (puoi implementare metodi di pre-processamento)
+        List<Document> relevantContext = ContextFilter.filterRelevantJson(vectorStoreResult, question);
+
+        log.info(
+                "relevantContext: {}",
+                relevantContext
+        );
+
+       // String documents = vectorStoreResult.stream()
+       //         .map(Document::getText)
+       //         .collect(Collectors.joining(System.lineSeparator()));
+
+        String documents = formatJsonContext(relevantContext);
+
+        // 3. Costruisci il prompt combinando il contesto e la domanda
+       // String prompt = "Utilizza le seguenti informazioni per rispondere alla domanda:\n" +
+       //         documents + "\nDomanda: " + question + "\nRisposta:";
 
 
         // Setting the prompt with the context
+        //String prompt = """
+        //       Utilizza le seguenti informazioni in {documents} estratte dal contesto JSON per rispondere alla domanda:
+        //        {question}.
+        //        Rispondi sempre in italiano e in modo chiaro e conciso.
+        //        Attieniti sempre alla domanda fornita.
+        //        Non fornire informazioni sul contesto JSON fornito
+        //            Grazie per la tua collaborazione.
+        //        """;
+
+
         String prompt = """
-                Utilizza le informazioni in {documents} alla
-                domanda nella sezione {question}.
-                Rispondi sempre in italiano e in modo chiaro e conciso.
-                    Grazie per la tua collaborazione.
+                Hai a disposizione un contesto costituito da una lista di oggetti JSON. Ogni oggetto contiene informazioni rilevanti su dati anagrafici di utenti che hanno fatto accesso 
+                a dati sensibili su soggetti controllati(persone politicamente esposte).
+                 Ogni utente ha un comandante,un ufficio,una richiesta,una motivazione e un'applicazione. 
+                 Utilizza questi dati per rispondere in maniera completa ed esaustiva alla domanda sottostante.
+                
+                Contesto:
+                -----------
+                {documents}
+                -----------
+                
+                Domanda:
+                -----------
+                {question}
+                -----------
+                
+                Istruzioni:
+                1. Analizza attentamente il contesto fornito e identifica le informazioni più rilevanti.
+                2. Organizza e riassumi i dati chiave presenti nei JSON.
+                3. Fornisci una risposta dettagliata, facendo riferimento alle informazioni estratte dal contesto.
+                4. Se alcune informazioni non sono chiare o mancanti, specifica eventuali incertezze o richiedi ulteriori dettagli.
+                5. Rispondi in modo chiaro, strutturato e in italiano.
+                
+                Risposta:
+                -----------
+                
+                
+                
+                
+                
+                
                 """;
 
 

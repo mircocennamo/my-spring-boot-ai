@@ -1,5 +1,6 @@
 package it.interno.ai.model;
 
+import it.interno.ai.annotations.FieldDescription;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -14,7 +15,9 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Richiesta {
+    @FieldDescription("Data della richiesta")
     private String dataRichiesta;
 
+    @FieldDescription("Ora della richiesta")
     private String oraRichiesta;
 }

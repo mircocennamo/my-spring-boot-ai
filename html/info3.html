@@ -106,7 +106,7 @@
 <body>
 <div class="header">
     <h1 style="text-align: center;">Chat Bot</h1>
-    <p>Questa pagina è stata creata per fornire informazioni inerenti ai files pdf caricati</p>
+    <p>Questa pagina è stata creata per fornire informazioni inerenti ai files caricati</p>
 </div>
 <div class="container">
     <div class="file-list" id="fileList">
@@ -123,6 +123,11 @@
     <input type="file" id="pdfFile" accept="application/pdf" onchange="enableUploadButton()">
     <button class="chat-button" id="uploadButton" onclick="uploadPdf()" disabled>Upload</button>
 </div>
+<div class="file-upload-container">
+    <h3>Upload Excel</h3>
+    <input type="file" id="excelFile" accept=".xlsx" onchange="enableExcelUploadButton()">
+    <button class="chat-button" id="uploadExcelButton" onclick="uploadExcel()" disabled>Upload</button>
+</div>
 <div class="footer">
     <p>Per ottenere informazioni, inserisci la tua domanda nel campo di testo e premi
         il pulsante "Send".</p>
@@ -131,74 +136,108 @@
 </div>
 
 <script>
-    function getCurrentDateTime() {
-     const now = new Date();
-     return now.toLocaleString();
- }
+    function enableExcelUploadButton() {
+       const fileInput = document.getElementById('excelFile');
+       const uploadButton = document.getElementById('uploadExcelButton');
+       uploadButton.disabled = !fileInput.files.length;
+   }
 
- async function sendMessage() {
-     const message = document.getElementById('chatInput').value;
-     if (!message) return;
+   async function uploadExcel() {
+        const fileInput = document.getElementById('excelFile');
+        const file = fileInput.files[0];
+        if (!file) return;
 
-     const chatBox = document.getElementById('chatBox');
-     const requestDateTime = getCurrentDateTime();
-     chatBox.innerHTML += `<div><strong>You:</strong> ${message} <span style="float:right;">${requestDateTime}</span></div>`;
-     document.getElementById('chatInput').value = '';
-     try {
-         const response = await fetch('http://localhost:8080/info?question=' + encodeURIComponent(message), {
-             method: 'GET',
-             headers: {
-                 'Accept': '*/*'
-             }
-         });
-         if (!response.ok) {
-             throw new Error('Network response was not ok');
-         }
-         const data = await response.text();
-         const responseDateTime = getCurrentDateTime();
-         chatBox.innerHTML += `<div><strong>Bot:</strong> ${data} <span style="float:right;">${responseDateTime}</span></div>`;
-     } catch (error) {
-         const responseDateTime = getCurrentDateTime();
-         chatBox.innerHTML += `<div><strong>Error:</strong> ${error.message} <span style="float:right;">${responseDateTime}</span></div>`;
-     }
+        const formData = new FormData();
+        formData.append('file', file);
 
-     document.getElementById('chatInput').value = '';
-     chatBox.scrollTop = chatBox.scrollHeight;
- }
+        try {
+            const response = await fetch('http://localhost:8080/uploadExcel', {
+                method: 'POST',
+                body: formData
+            });
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            const data = await response.text();
+            alert('File uploaded and processed successfully!');
 
-     function enableUploadButton() {
-         const fileInput = document.getElementById('pdfFile');
-         const uploadButton = document.getElementById('uploadButton');
-         uploadButton.disabled = !fileInput.files.length;
-     }
+            // Append the file name and date/time to the file list
+            const fileList = document.getElementById('fileList');
+            const dateTime = getCurrentDateTime();
+            fileList.innerHTML += `<div>${file.name} <span style="float:right;">${dateTime}</span></div>`;
+        } catch (error) {
+            alert('Failed to upload and process file: ' + error.message);
+        }
+    }
 
-     async function uploadPdf() {
-         const fileInput = document.getElementById('pdfFile');
-         const file = fileInput.files[0];
-         if (!file) return;
+   function getCurrentDateTime() {
+    const now = new Date();
+    return now.toLocaleString();
+}
 
-         const formData = new FormData();
-         formData.append('file', file);
+async function sendMessage() {
+    const message = document.getElementById('chatInput').value;
+    if (!message) return;
 
-         try {
-             const response = await fetch('http://localhost:8080/uploadPdf', {
-                 method: 'POST',
-                 body: formData
-             });
-             if (!response.ok) {
-                 throw new Error('Network response was not ok');
-             }
-             const data = await response.text();
-             alert('File uploaded and processed successfully!');
+    const chatBox = document.getElementById('chatBox');
+    const requestDateTime = getCurrentDateTime();
+    chatBox.innerHTML += `<div><strong>You:</strong> ${message} <span style="float:right;">${requestDateTime}</span></div>`;
+    document.getElementById('chatInput').value = '';
+    try {
+        const response = await fetch('http://localhost:8080/info?question=' + encodeURIComponent(message), {
+            method: 'GET',
+            headers: {
+                'Accept': '*/*'
+            }
+        });
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        const data = await response.text();
+        const responseDateTime = getCurrentDateTime();
+        chatBox.innerHTML += `<div><strong>Bot:</strong> ${data} <span style="float:right;">${responseDateTime}</span></div>`;
+    } catch (error) {
+        const responseDateTime = getCurrentDateTime();
+        chatBox.innerHTML += `<div><strong>Error:</strong> ${error.message} <span style="float:right;">${responseDateTime}</span></div>`;
+    }
 
-             // Append the file name and date/time to the file list
-             const fileList = document.getElementById('fileList');
-             const dateTime = getCurrentDateTime();
-             fileList.innerHTML += `<div>${file.name} <span style="float:right;">${dateTime}</span></div>`;
-         } catch (error) {
-             alert('Failed to upload and process file: ' + error.message);
-         }
-     }
+    document.getElementById('chatInput').value = '';
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+    function enableUploadButton() {
+        const fileInput = document.getElementById('pdfFile');
+        const uploadButton = document.getElementById('uploadButton');
+        uploadButton.disabled = !fileInput.files.length;
+    }
+
+    async function uploadPdf() {
+        const fileInput = document.getElementById('pdfFile');
+        const file = fileInput.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const response = await fetch('http://localhost:8080/uploadPdf', {
+                method: 'POST',
+                body: formData
+            });
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            const data = await response.text();
+            alert('File uploaded and processed successfully!');
+
+            // Append the file name and date/time to the file list
+            const fileList = document.getElementById('fileList');
+            const dateTime = getCurrentDateTime();
+            fileList.innerHTML += `<div>${file.name} <span style="float:right;">${dateTime}</span></div>`;
+        } catch (error) {
+            alert('Failed to upload and process file: ' + error.message);
+        }
+    }
 </script>
 </body>
 </html>

@@ -1,5 +1,6 @@
 package it.interno.ai.controller;
 
+
 import it.interno.ai.service.PPEDocumentService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,6 +52,21 @@ public class PPEController {
             File convFile = new File(System.getProperty("java.io.tmpdir") + "/" + file.getOriginalFilename());
             file.transferTo(convFile);
             documentService.ingestPDF(new FileSystemResource(convFile));
+
+            return ResponseEntity.ok().body("File caricato e processato!");
+        } catch (IOException e) {
+            log.error(e.getMessage());
+            return ResponseEntity.internalServerError().body("Errore nel caricamento e nel processamento del file");
+        }
+    }
+
+    @PostMapping(value = "/uploadExcel", consumes = "multipart/form-data")
+    public ResponseEntity<String> uploadExcel(@RequestParam("file") MultipartFile file){
+        try {
+            // Save the uploaded file to the file system
+            File convFile = new File(System.getProperty("java.io.tmpdir") + "/" + file.getOriginalFilename());
+            file.transferTo(convFile);
+            documentService.ingestExcel(new FileSystemResource(convFile));
 
             return ResponseEntity.ok().body("File caricato e processato!");
         } catch (IOException e) {

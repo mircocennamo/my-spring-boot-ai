@@ -3,14 +3,11 @@ package it.interno.ai.tools;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.ai.document.Document;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * @author mirco.cennamo on 28/02/2025
@@ -28,14 +25,14 @@ public class GeneratorTools {
 
     }
 
-    @Tool(description = "Restituisce la data di oggi")
+   // @Tool(description = "Restituisce la data di oggi")
     public String getCurrentDate() {
         log.info("start getCurrentDate");
         LocalDate currentDate = LocalDate.now();
         log.info("Current date: {}", currentDate);
         return currentDate.toString();
     }
-
+/*
     @Tool(description = "Ordina una lista di JSON in base alla rilevanza rispetto alla query.")
     public List<Document> rankContext(List<Document> jsonList, String query) {
         log.info("start rankContext");
@@ -77,5 +74,5 @@ public class GeneratorTools {
         return new float[]{1.0f, 0.0f, 0.5f};
     }
 
-
+*/
 }

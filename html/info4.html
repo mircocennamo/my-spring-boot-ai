@@ -1,0 +1,197 @@
+<!-- src/main/resources/templates/index.html -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Chat AI con RAG</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .chat-container {
+            height: 70vh;
+            overflow-y: auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+        .message {
+            padding: 10px 15px;
+            border-radius: 15px;
+            margin-bottom: 10px;
+            max-width: 80%;
+        }
+        .user-message {
+            background-color: #d1e7ff;
+            margin-left: auto;
+        }
+        .ai-message {
+            background-color: #f0f0f0;
+            margin-right: auto;
+        }
+        .sources {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 5px;
+        }
+        .upload-container {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px dashed #ccc;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+<div class="container mt-4">
+    <h1 class="mb-4">Chat AI con RAG per file Excel</h1>
+
+    <div class="upload-container">
+        <h4>Carica file Excel</h4>
+        <form id="uploadForm" enctype="multipart/form-data">
+            <div class="mb-3">
+                <input class="form-control" type="file" id="excelFile" accept=".xlsx, .xls">
+            </div>
+            <button type="submit" class="btn btn-primary">Carica</button>
+        </form>
+        <div id="uploadStatus" class="mt-2"></div>
+    </div>
+
+    <div class="chat-container" id="chatContainer">
+        <!-- I messaggi verranno aggiunti qui dinamicamente -->
+    </div>
+
+    <div class="input-group">
+        <input type="text" class="form-control" id="userInput" placeholder="Scrivi un messaggio...">
+        <button class="btn btn-primary" id="sendButton">Invia</button>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const chatContainer = document.getElementById('chatContainer');
+        const userInput = document.getElementById('userInput');
+        const sendButton = document.getElementById('sendButton');
+        const uploadForm = document.getElementById('uploadForm');
+        const uploadStatus = document.getElementById('uploadStatus');
+
+        // Carica la cronologia della chat all'avvio
+        loadChatHistory();
+
+        // Gestione dell'invio dei messaggi
+        sendButton.addEventListener('click', sendMessage);
+        userInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Gestione del caricamento dei file
+        uploadForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            uploadExcelFile();
+        });
+
+        function sendMessage() {
+            const message = userInput.value.trim();
+            if (message === '') return;
+
+            // Aggiungi il messaggio dell'utente alla chat
+            addMessageToChat('user', message);
+            userInput.value = '';
+
+            // Invia la richiesta al backend
+            fetch('/api/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    content: message,
+                    sender: 'user'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Aggiungi la risposta dell'AI alla chat
+                addMessageToChat('ai', data.content, data.referenceSources);
+            })
+            .catch(error => {
+                console.error('Errore:', error);
+                addMessageToChat('ai', 'Mi dispiace, si è verificato un errore. Riprova più tardi.');
+            });
+        }
+
+        function addMessageToChat(sender, content, sources = []) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message', sender === 'user' ? 'user-message' : 'ai-message');
+
+            messageDiv.textContent = content;
+
+            // Aggiungi le fonti se presenti
+            if (sources && sources.length > 0) {
+                const sourcesDiv = document.createElement('div');
+                sourcesDiv.classList.add('sources');
+                sourcesDiv.textContent = 'Fonti: ' + sources.join(', ');
+                messageDiv.appendChild(sourcesDiv);
+            }
+
+            chatContainer.appendChild(messageDiv);
+
+            // Scorri verso il basso per visualizzare il messaggio più recente
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function loadChatHistory() {
+            fetch('/api/chat/history')
+            .then(response => response.json())
+            .then(messages => {
+                chatContainer.innerHTML = '';
+                messages.forEach(msg => {
+                    addMessageToChat(msg.sender, msg.content, msg.referenceSources);
+                });
+            })
+            .catch(error => {
+                console.error('Errore nel caricamento della cronologia:', error);
+            });
+        }
+
+        function uploadExcelFile() {
+            const fileInput = document.getElementById('excelFile');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                uploadStatus.textContent = 'Seleziona un file da caricare.';
+                uploadStatus.style.color = 'red';
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            uploadStatus.textContent = 'Caricamento in corso...';
+            uploadStatus.style.color = 'blue';
+
+            fetch('/api/documents/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.text())
+            .then(data => {
+                uploadStatus.textContent = data;
+                uploadStatus.style.color = 'green';
+                fileInput.value = '';
+
+                // Aggiungi un messaggio di sistema nella chat
+                addMessageToChat('ai', `File "${file.name}" caricato con successo. Ora puoi fare domande sui dati contenuti nel file.`);
+            })
+            .catch(error => {
+                console.error('Errore:', error);
+                uploadStatus.textContent = 'Si è verificato un errore durante il caricamento del file.';
+                uploadStatus.style.color = 'red';
+            });
+        }
+    });
+</script>
+</body>
+</html>

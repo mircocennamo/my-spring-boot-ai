@@ -14,9 +14,9 @@ import org.springframework.ai.document.Document;
 import org.springframework.ai.reader.pdf.PagePdfDocumentReader;
 import org.springframework.ai.transformer.splitter.TokenTextSplitter;
 import org.springframework.ai.vectorstore.SearchRequest;
-import org.springframework.ai.vectorstore.VectorStore;
+
+import org.springframework.ai.vectorstore.elasticsearch.ElasticsearchVectorStore;
 import org.springframework.core.io.Resource;
-import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -34,14 +34,14 @@ import static it.interno.ai.utils.BeanToDocumentConverter.convertToDocumentList;
 public class PPEDocumentService {
 
     private final ChatClient chatClient;
-    private final VectorStore vectorStore;
+    private final ElasticsearchVectorStore vectorStore;
 
     private static final Logger log = LoggerFactory.getLogger(PPEDocumentService.class);
 
 
-    private MongoTemplate mongoTemplate;
+
     public PPEDocumentService(ChatClient.Builder builder,
-                              VectorStore vectorStore,
+                              ElasticsearchVectorStore vectorStore,
                               ChatMemory chatMemory,
                               GeneratorTools generatorTools,
                               ChatClient chatClient
@@ -102,7 +102,16 @@ public class PPEDocumentService {
             Sheet sheet = workbook.getSheetAt(0);
             for (Row row : sheet) {
                 if (row.getRowNum() == 0) continue; // Skip header row
+                Metadata metadata = new Metadata();
+                metadata.setFileType("xlsx");
+                metadata.setSource(resource.getFilename());
+                metadata.setIndexedAt(new java.util.Date());
+                metadata.setRowCount(row.getRowNum());
+
+
+
                 Utente ppe = new Utente();
+                ppe.setMetadata(metadata);
                 ppe.setIdUtente(row.getCell(0).getStringCellValue());
                 ppe.setCognomeUtente(row.getCell(1).getStringCellValue());
                 ppe.setNomeUtente(row.getCell(2).getStringCellValue());
@@ -158,7 +167,8 @@ public class PPEDocumentService {
         //1. Querying the vector store for documents related to the question
         List<Document> vectorStoreResult =
                vectorStore.similaritySearch(SearchRequest.builder().query(question)
-                        .topK(5).similarityThreshold(0.6)
+                       // .topK(5)
+                      // .similarityThreshold(0.6)
                         //.topK(50).similarityThreshold(1)
                        .build());
 
@@ -202,10 +212,8 @@ public class PPEDocumentService {
 
 
         String prompt = """
-                Hai a disposizione un contesto costituito da una lista di oggetti JSON. Ogni oggetto contiene informazioni rilevanti su dati anagrafici di utenti che hanno fatto accesso 
-                a dati sensibili su soggetti controllati(persone politicamente esposte).
-                 Ogni utente ha un comandante,un ufficio,una richiesta,una motivazione e un'applicazione. 
-                 Utilizza questi dati per rispondere in maniera completa ed esaustiva alla domanda sottostante.
+                Rispondi alla domanda nella sezione "Risposta" utilizzando le informazioni fornite nel contesto.
+                Mostra  i dati recuperati dall'oggetto metadata
                 
                 Contesto:
                 -----------
@@ -219,13 +227,13 @@ public class PPEDocumentService {
                 
                 Istruzioni:
                 1. Analizza attentamente il contesto fornito e identifica le informazioni più rilevanti.
-                2. Organizza e riassumi i dati chiave presenti nei JSON.
+                2. Organizza e riassumi i dati  presenti nel contesto.
                 3. Fornisci una risposta dettagliata, facendo riferimento alle informazioni estratte dal contesto.
                 4. Se alcune informazioni non sono chiare o mancanti, specifica eventuali incertezze o richiedi ulteriori dettagli.
                 5. Rispondi in modo chiaro, strutturato e in italiano.
                 
                 Risposta:
-                -----------
+                
                 
                 
                 
@@ -255,17 +263,21 @@ public class PPEDocumentService {
 
 
         // Calling the chat model with the question
-        return chatClient.prompt()
+        String response =  chatClient.prompt()
                 .user(u->u.text(prompt)
                         .param("documents", documents)
                         .param("question", question))
                 .call()
                 .content();
 
+        log.info(
+                "response: {}",
+                response
+        );
 
-        //return response;
+       // return response;
 
-       /* if(vectorStoreResult!=null && vectorStoreResult.get(0)!=null &&
+        if(vectorStoreResult!=null && vectorStoreResult.get(0)!=null &&
                 vectorStoreResult.getFirst().getMetadata()!=null &&
                 vectorStoreResult.get(0).getMetadata().get(PagePdfDocumentReader.METADATA_START_PAGE_NUMBER)!=null){
             return response +
@@ -277,7 +289,7 @@ public class PPEDocumentService {
         }else{
             return response;
         }
-        */
+
 
     }
 

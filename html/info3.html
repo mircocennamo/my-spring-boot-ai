@@ -114,7 +114,7 @@
     </div>
     <div class="chat-container">
         <div class="chat-box" id="chatBox"></div>
-        <input type="text" id="chatInput" class="chat-input" placeholder="Type your message here...">
+        <input type="text" id="chatInput" class="chat-input" placeholder="Type your message here..." onkeydown="checkEnterKey(event)">
         <button class="chat-button" onclick="sendMessage()">Send</button>
     </div>
 </div>
@@ -136,6 +136,12 @@
 </div>
 
 <script>
+    function checkEnterKey(event) {
+        if (event.key === 'Enter') {
+            sendMessage();
+        }
+    }
+
     function enableExcelUploadButton() {
        const fileInput = document.getElementById('excelFile');
        const uploadButton = document.getElementById('uploadExcelButton');
@@ -201,7 +207,6 @@ async function sendMessage() {
         chatBox.innerHTML += `<div><strong>Error:</strong> ${error.message} <span style="float:right;">${responseDateTime}</span></div>`;
     }
 
-    document.getElementById('chatInput').value = '';
     chatBox.scrollTop = chatBox.scrollHeight;
 }
 

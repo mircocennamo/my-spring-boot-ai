@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Chat AI con RAG</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#f3f4f6',
+                        border: '#e5e7eb',
+                        userMessage: '#dbeafe',
+                        aiMessage: '#f3f4f6',
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.3s ease-in-out',
+                        'typing': 'typing 1s infinite',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        typing: {
+                            '0%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-5px)' },
+                            '100%': { transform: 'translateY(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 font-sans">
+<div class="max-w-6xl mx-auto p-5 bg-white shadow-lg rounded-xl mt-4">
+    <h1 class="mb-6 text-center text-2xl font-bold">
+        <i class="fas fa-robot text-primary mr-2"></i>
+        Chat AI con RAG per file Excel e PDF
+    </h1>
+    
+    <div class="mb-5">
+        <div class="border-b border-gray-200">
+            <ul class="flex flex-wrap -mb-px" id="myTab" role="tablist">
+                <li class="mr-2" role="presentation">
+                    <button class="inline-block p-4 border-b-2 border-primary text-primary rounded-t-lg active" 
+                            id="chat-tab" data-tab="chat" type="button" role="tab" aria-controls="chat" aria-selected="true">
+                        <i class="fas fa-comments mr-2"></i>Chat
+                    </button>
+                </li>
+                <li class="mr-2" role="presentation">
+                    <button class="inline-block p-4 border-b-2 border-transparent hover:text-gray-600 hover:border-gray-300 rounded-t-lg"
+                            id="upload-tab" data-tab="upload" type="button" role="tab" aria-controls="upload" aria-selected="false">
+                        <i class="fas fa-upload mr-2"></i>Carica File
+                    </button>
+                </li>
+            </ul>
+        </div>
+        
+        <div class="tab-content">
+            <div class="tab-pane block" id="chat" role="tabpanel" aria-labelledby="chat-tab">
+                <div class="text-right mb-2">
+                    <button class="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-100 transition-colors" id="clearChatBtn">
+                        <i class="fas fa-trash mr-1"></i>Pulisci chat
+                    </button>
+                </div>
+                <div class="h-[60vh] overflow-y-auto p-5 border border-gray-200 rounded-xl mb-4 bg-white scroll-smooth" id="chatContainer">
+                    <!-- I messaggi verranno aggiunti qui dinamicamente -->
+                    <div class="p-3 rounded-2xl mb-4 max-w-[80%] shadow-sm bg-aiMessage mr-auto rounded-bl-sm animate-fade-in">
+                        <div>Benvenuto! Carica un file Excel o PDF e poi fammi domande sui dati contenuti.</div>
+                        <div class="text-xs text-gray-500 mt-2 text-right">Sistema, oggi alle <span id="currentTime"></span></div>
+                    </div>
+                </div>
+                <div class="flex mt-5">
+                    <input type="text" class="flex-grow px-4 py-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" 
+                           id="userInput" placeholder="Scrivi un messaggio...">
+                    <button class="bg-primary text-white px-4 py-2 rounded-r-lg hover:bg-blue-600 transition-colors" id="sendButton">
+                        <i class="fas fa-paper-plane mr-1"></i>Invia
+                    </button>
+                </div>
+            </div>
+            
+            <div class="tab-pane hidden" id="upload" role="tabpanel" aria-labelledby="upload-tab">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="p-5 border border-gray-200 rounded-xl bg-gray-50 hover:shadow-md transition-shadow">
+                        <h4 class="text-lg font-medium mb-4"><i class="fas fa-file-excel text-green-500 mr-2"></i>Carica file Excel</h4>
+                        <form id="uploadExcelForm" enctype="multipart/form-data">
+                            <div class="mb-3">
+                                <input class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none" 
+                                       type="file" id="excelFile" accept=".xlsx, .xls">
+                            </div>
+                            <button type="submit" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+                                <i class="fas fa-upload mr-1"></i>Carica
+                            </button>
+                        </form>
+                        <div id="uploadExcelStatus" class="mt-3 hidden"></div>
+                    </div>
+                    
+                    <div class="p-5 border border-gray-200 rounded-xl bg-gray-50 hover:shadow-md transition-shadow">
+                        <h4 class="text-lg font-medium mb-4"><i class="fas fa-file-pdf text-red-500 mr-2"></i>Carica file PDF</h4>
+                        <form id="uploadPdfForm" enctype="multipart/form-data">
+                            <div class="mb-3">
+                                <input class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none" 
+                                       type="file" id="pdfFile" accept=".pdf">
+                            </div>
+                            <button type="submit" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+                                <i class="fas fa-upload mr-1"></i>Carica
+                            </button>
+                        </form>
+                        <div id="uploadPdfStatus" class="mt-3 hidden"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const chatContainer = document.getElementById('chatContainer');
+        const userInput = document.getElementById('userInput');
+        const sendButton = document.getElementById('sendButton');
+        const uploadExcelForm = document.getElementById('uploadExcelForm');
+        const uploadPdfForm = document.getElementById('uploadPdfForm');
+        const uploadExcelStatus = document.getElementById('uploadExcelStatus');
+        const uploadPdfStatus = document.getElementById('uploadPdfStatus');
+        const clearChatBtn = document.getElementById('clearChatBtn');
+        const currentTime = document.getElementById('currentTime');
+        
+        // Imposta l'ora corrente
+        currentTime.textContent = new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+        
+        // Gestione dei tab
+        const tabs = document.querySelectorAll('[data-tab]');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Rimuovi la classe active da tutti i tab
+                tabs.forEach(t => {
+                    t.classList.remove('border-primary', 'text-primary');
+                    t.classList.add('border-transparent', 'hover:text-gray-600', 'hover:border-gray-300');
+                });
+                
+                // Aggiungi la classe active al tab cliccato
+                tab.classList.add('border-primary', 'text-primary');
+                tab.classList.remove('border-transparent', 'hover:text-gray-600', 'hover:border-gray-300');
+                
+                // Nascondi tutti i contenuti dei tab
+                document.querySelectorAll('.tab-pane').forEach(pane => {
+                    pane.classList.add('hidden');
+                    pane.classList.remove('block');
+                });
+                
+                // Mostra il contenuto del tab cliccato
+                const target = document.getElementById(tab.getAttribute('data-tab'));
+                target.classList.remove('hidden');
+                target.classList.add('block');
+            });
+        });
+        
+        // Carica la cronologia della chat all'avvio
+        loadChatHistory();
+        
+        // Gestione dell'invio dei messaggi
+        sendButton.addEventListener('click', sendMessage);
+        userInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+        
+        // Gestione del caricamento dei file Excel
+        uploadExcelForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            uploadExcelFile();
+        });
+        
+        // Gestione del caricamento dei file PDF
+        uploadPdfForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            uploadPdfFile();
+        });
+        
+        // Gestione della pulizia della chat
+        clearChatBtn.addEventListener('click', function() {
+            if (confirm('Sei sicuro di voler cancellare tutta la chat?')) {
+                chatContainer.innerHTML = '';
+                localStorage.removeItem('chatHistory');
+                
+                // Aggiungi il messaggio di benvenuto
+                const welcomeMessage = document.createElement('div');
+                welcomeMessage.className = 'p-3 rounded-2xl mb-4 max-w-[80%] shadow-sm bg-aiMessage mr-auto rounded-bl-sm animate-fade-in';
+                welcomeMessage.innerHTML = `
+                    <div>Benvenuto! Carica un file Excel o PDF e poi fammi domande sui dati contenuti.</div>
+                    <div class="text-xs text-gray-500 mt-2 text-right">Sistema, oggi alle ${new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}</div>
+                `;
+                chatContainer.appendChild(welcomeMessage);
+            }
+        });
+        
+        function sendMessage() {
+            const message = userInput.value.trim();
+            if (message === '') return;
+            
+            // Aggiungi il messaggio dell'utente alla chat
+            addMessageToChat('user', message);
+            userInput.value = '';
+            
+            // Mostra l'indicatore di digitazione
+            showTypingIndicator();
+            
+            // Invia la richiesta al backend
+            fetch('http://localhost:8080/info?question=' + encodeURIComponent(message), {
+                method: 'GET',
+                headers: {
+                    'Accept': '*/*'
+                }
+            })
+            .then(response => response.text())
+            .then(data => {
+                // Rimuovi l'indicatore di digitazione
+                removeTypingIndicator();
+                // Aggiungi la risposta dell'AI alla chat
+                addMessageToChat('ai', data);
+            })
+            .catch(error => {
+                console.error('Errore:', error);
+                removeTypingIndicator();
+                addMessageToChat('ai', 'Mi dispiace, si è verificato un errore. Riprova più tardi.');
+            });
+        }
+        
+        function showTypingIndicator() {
+            const typingDiv = document.createElement('div');
+            typingDiv.id = 'typingIndicator';
+            typingDiv.className = 'inline-block p-3 bg-aiMessage rounded-xl mb-3';
+            typingDiv.innerHTML = '<span class="inline-block h-2 w-2 bg-gray-500 rounded-full animate-typing"></span>' +
+                                  '<span class="inline-block h-2 w-2 bg-gray-500 rounded-full animate-typing mx-1" style="animation-delay: 0.2s"></span>' +
+                                  '<span class="inline-block h-2 w-2 bg-gray-500 rounded-full animate-typing" style="animation-delay: 0.4s"></span>';
+            chatContainer.appendChild(typingDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+        
+        function removeTypingIndicator() {
+            const typingDiv = document.getElementById('typingIndicator');
+            if (typingDiv) {
+                typingDiv.remove();
+            }
+        }
+        
+        function addMessageToChat(sender, content) {
+            const messageDiv = document.createElement('div');
+            
+            if (sender === 'user') {
+                messageDiv.className = 'p-3 rounded-2xl mb-4 max-w-[80%] shadow-sm bg-userMessage ml-auto rounded-br-sm animate-fade-in';
+            } else {
+                messageDiv.className = 'p-3 rounded-2xl mb-4 max-w-[80%] shadow-sm bg-aiMessage mr-auto rounded-bl-sm animate-fade-in';
+            }
+            
+            // Formatta la data in italiano
+            const now = new Date();
+            const options = { hour: '2-digit', minute: '2-digit' };
+            const formattedTime = now.toLocaleTimeString('it-IT', options);
+            
+            // Se il contenuto contiene HTML (come la risposta strutturata), lo preserviamo
+            messageDiv.innerHTML = `<div>${content}</div><div class="text-xs text-gray-500 mt-2 text-right">${sender === 'user' ? 'Tu' : 'AI'}, oggi alle ${formattedTime}</div>`;
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            
+            // Salva il messaggio nella cronologia locale
+            saveMessageToLocalStorage(sender, content);
+        }
+        
+        function saveMessageToLocalStorage(sender, content) {
+            let chatHistory = JSON.parse(localStorage.getItem('chatHistory') || '[]');
+            chatHistory.push({
+                sender: sender,
+                content: content,
+                timestamp: new Date().toISOString()
+            });
+            // Limita la cronologia a 50 messaggi
+            if (chatHistory.length > 50) {
+                chatHistory = chatHistory.slice(chatHistory.length - 50);
+            }
+            localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+        }
+        
+        function loadChatHistory() {
+            // Prima controlla se c'è una cronologia locale
+            const chatHistory = JSON.parse(localStorage.getItem('chatHistory') || '[]');
+            
+            if (chatHistory.length > 0) {
+                chatContainer.innerHTML = '';
+                chatHistory.forEach(msg => {
+                    const messageDiv = document.createElement('div');
+                    
+                    if (msg.sender === 'user') {
+                        messageDiv.className = 'p-3 rounded-2xl mb-4 max-w-[80%] shadow-sm bg-userMessage ml-auto rounded-br-sm animate-fade-in';
+                    } else {
+                        messageDiv.className = 'p-3 rounded-2xl mb-4 max-w-[80%] shadow-sm bg-aiMessage mr-auto rounded-bl-sm animate-fade-in';
+                    }
+                    
+                    // Formatta la data in italiano
+                    const msgDate = new Date(msg.timestamp);
+                    const options = { hour: '2-digit', minute: '2-digit' };
+                    const formattedTime = msgDate.toLocaleTimeString('it-IT', options);
+                    
+                    messageDiv.innerHTML = `<div>${msg.content}</div><div class="text-xs text-gray-500 mt-2 text-right">${msg.sender === 'user' ? 'Tu' : 'AI'}, ${formattedTime}</div>`;
+                    chatContainer.appendChild(messageDiv);
+                });
+            } else {
+                // Aggiungi un messaggio di benvenuto se non c'è cronologia
+                const welcomeMessage = document.createElement('div');
+                welcomeMessage.className = 'p-3 rounded-2xl mb-4 max-w-[80%] shadow-sm bg-aiMessage mr-auto rounded-bl-sm animate-fade-in';
+                welcomeMessage.innerHTML = `
+                    <div>Benvenuto! Carica un file Excel o PDF e poi fammi domande sui dati contenuti.</div>
+                    <div class="text-xs text-gray-500 mt-2 text-right">Sistema, oggi alle ${new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}</div>
+                `;
+                chatContainer.appendChild(welcomeMessage);
+            }
+            
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function uploadExcelFile() {
+            const fileInput = document.getElementById('excelFile');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                uploadExcelStatus.innerHTML = '<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">Seleziona un file da caricare.</div>';
+                uploadExcelStatus.classList.remove('hidden');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            uploadExcelStatus.innerHTML = `
+                <div class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded flex items-center">
+                    <span>Caricamento in corso...</span>
+                    <svg class="animate-spin ml-2 h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </div>
+            `;
+            uploadExcelStatus.classList.remove('hidden');
+
+            fetch('http://localhost:8080/uploadExcel', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Errore nel caricamento del file');
+                }
+                return response.text();
+            })
+            .then(data => {
+                uploadExcelStatus.innerHTML = '<div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">File caricato con successo!</div>';
+                fileInput.value = '';
+
+                // Aggiungi un messaggio di sistema nella chat
+                addMessageToChat('ai', `File Excel "${file.name}" caricato con successo. Ora puoi fare domande sui dati contenuti nel file.`);
+                
+                // Passa automaticamente alla tab della chat
+                document.getElementById('chat-tab').click();
+            })
+            .catch(error => {
+                console.error('Errore:', error);
+                uploadExcelStatus.innerHTML = '<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">Si è verificato un errore durante il caricamento del file.</div>';
+            });
+        }
+
+        function uploadPdfFile() {
+            const fileInput = document.getElementById('pdfFile');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                uploadPdfStatus.innerHTML = '<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">Seleziona un file da caricare.</div>';
+                uploadPdfStatus.classList.remove('hidden');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            uploadPdfStatus.innerHTML = `
+                <div class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded flex items-center">
+                    <span>Caricamento in corso...</span>
+                    <svg class="animate-spin ml-2 h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </div>
+            `;
+            uploadPdfStatus.classList.remove('hidden');
+
+            fetch('http://localhost:8080/uploadPdf', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Errore nel caricamento del file');
+                }
+                return response.text();
+            })
+            .then(data => {
+                uploadPdfStatus.innerHTML = '<div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">File caricato con successo!</div>';
+                fileInput.value = '';
+
+                // Aggiungi un messaggio di sistema nella chat
+                addMessageToChat('ai', `File PDF "${file.name}" caricato con successo. Ora puoi fare domande sui dati contenuti nel file.`);
+                
+                // Passa automaticamente alla tab della chat
+                document.getElementById('chat-tab').click();
+            })
+            .catch(error => {
+                console.error('Errore:', error);
+                uploadPdfStatus.innerHTML = '<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">Si è verificato un errore durante il caricamento del file.</div>';
+            });
+        }
+    });
+</script>
+</body>
+</html>

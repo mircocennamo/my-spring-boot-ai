@@ -5,78 +5,260 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        :root {
+            --primary-color: #0d6efd;
+            --secondary-color: #f8f9fa;
+            --border-color: #dee2e6;
+            --user-message-bg: #d1e7ff;
+            --ai-message-bg: #f0f0f0;
+        }
+
+        body {
+            background-color: #f9f9f9;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .app-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            border-radius: 10px;
+        }
+
         .chat-container {
-            height: 70vh;
+            height: 60vh;
             overflow-y: auto;
             padding: 20px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
             margin-bottom: 15px;
+            background-color: white;
+            scroll-behavior: smooth;
         }
+
         .message {
-            padding: 10px 15px;
-            border-radius: 15px;
-            margin-bottom: 10px;
+            padding: 12px 18px;
+            border-radius: 18px;
+            margin-bottom: 15px;
             max-width: 80%;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            position: relative;
+            animation: fadeIn 0.3s ease-in-out;
         }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         .user-message {
-            background-color: #d1e7ff;
+            background-color: var(--user-message-bg);
             margin-left: auto;
+            border-bottom-right-radius: 5px;
         }
+
         .ai-message {
-            background-color: #f0f0f0;
+            background-color: var(--ai-message-bg);
             margin-right: auto;
+            border-bottom-left-radius: 5px;
         }
+
         .sources {
             font-size: 0.8rem;
             color: #666;
-            margin-top: 5px;
+            margin-top: 8px;
+            text-align: right;
         }
+
         .upload-container {
             margin-bottom: 20px;
-            padding: 15px;
-            border: 1px dashed #ccc;
-            border-radius: 5px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            background-color: var(--secondary-color);
+            transition: all 0.3s ease;
+        }
+
+        .upload-container:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .input-group {
+            margin-top: 20px;
+        }
+
+        .form-control:focus {
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+            border-color: var(--primary-color);
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background-color: #0b5ed7;
+            border-color: #0b5ed7;
+            transform: translateY(-2px);
+        }
+
+        .tabs-container {
+            margin-bottom: 20px;
+        }
+
+        .nav-tabs .nav-link {
+            color: #495057;
+            border: 1px solid transparent;
+            border-top-left-radius: 0.25rem;
+            border-top-right-radius: 0.25rem;
+            padding: 10px 20px;
+        }
+
+        .nav-tabs .nav-link.active {
+            color: var(--primary-color);
+            background-color: #fff;
+            border-color: var(--border-color) var(--border-color) #fff;
+            font-weight: bold;
+        }
+
+        .tab-content {
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            border-top: none;
+            border-radius: 0 0 10px 10px;
+        }
+
+        .risposta-container h2 {
+            color: var(--primary-color);
+            font-size: 1.2rem;
+            margin-top: 15px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+
+        .typing-indicator {
+            display: inline-block;
+            padding: 10px 15px;
+            background-color: var(--ai-message-bg);
+            border-radius: 15px;
+            margin-bottom: 10px;
+        }
+
+        .typing-indicator span {
+            height: 8px;
+            width: 8px;
+            background-color: #666;
+            border-radius: 50%;
+            display: inline-block;
+            margin: 0 2px;
+            animation: typing 1s infinite;
+        }
+
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+            100% { transform: translateY(0); }
+        }
+
+        .clear-chat {
+            margin-bottom: 10px;
+            text-align: right;
         }
     </style>
 </head>
 <body>
-<div class="container mt-4">
-    <h1 class="mb-4">Chat AI con RAG per file Excel e PDF</h1>
+<div class="container mt-4 app-container">
+    <h1 class="mb-4 text-center">
+        <i class="fas fa-robot text-primary me-2"></i>
+        Chat AI con RAG per file Excel e PDF
+    </h1>
 
-    <div class="upload-container">
-        <h4>Carica file Excel</h4>
-        <form id="uploadExcelForm" enctype="multipart/form-data">
-            <div class="mb-3">
-                <input class="form-control" type="file" id="excelFile" accept=".xlsx, .xls">
+    <div class="tabs-container">
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="chat-tab" data-bs-toggle="tab" data-bs-target="#chat" type="button" role="tab" aria-controls="chat" aria-selected="true">
+                    <i class="fas fa-comments me-2"></i>Chat
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="upload-tab" data-bs-toggle="tab" data-bs-target="#upload" type="button" role="tab" aria-controls="upload" aria-selected="false">
+                    <i class="fas fa-upload me-2"></i>Carica File
+                </button>
+            </li>
+        </ul>
+        <div class="tab-content" id="myTabContent">
+            <div class="tab-pane fade show active" id="chat" role="tabpanel" aria-labelledby="chat-tab">
+                <div class="clear-chat">
+                    <button class="btn btn-outline-secondary btn-sm" id="clearChatBtn">
+                        <i class="fas fa-trash me-1"></i>Pulisci chat
+                    </button>
+                </div>
+                <div class="chat-container" id="chatContainer">
+                    <!-- I messaggi verranno aggiunti qui dinamicamente -->
+                    <div class="message ai-message">
+                        <div>Benvenuto! Carica un file Excel o PDF e poi fammi domande sui dati contenuti.</div>
+                        <div class="sources">Sistema, oggi alle ${new Date().toLocaleTimeString()}</div>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <input type="text" class="form-control" id="userInput" placeholder="Scrivi un messaggio...">
+                    <button class="btn btn-primary" id="sendButton">
+                        <i class="fas fa-paper-plane me-1"></i>Invia
+                    </button>
+                </div>
             </div>
-            <button type="submit" class="btn btn-primary">Carica</button>
-        </form>
-        <div id="uploadExcelStatus" class="mt-2"></div>
-    </div>
-
-    <div class="upload-container">
-        <h4>Carica file PDF</h4>
-        <form id="uploadPdfForm" enctype="multipart/form-data">
-            <div class="mb-3">
-                <input class="form-control" type="file" id="pdfFile" accept=".pdf">
+            <div class="tab-pane fade" id="upload" role="tabpanel" aria-labelledby="upload-tab">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="upload-container">
+                            <h4><i class="fas fa-file-excel text-success me-2"></i>Carica file Excel</h4>
+                            <form id="uploadExcelForm" enctype="multipart/form-data">
+                                <div class="mb-3">
+                                    <input class="form-control" type="file" id="excelFile" accept=".xlsx, .xls">
+                                </div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-upload me-1"></i>Carica
+                                </button>
+                            </form>
+                            <div id="uploadExcelStatus" class="mt-2 alert" style="display: none;"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="upload-container">
+                            <h4><i class="fas fa-file-pdf text-danger me-2"></i>Carica file PDF</h4>
+                            <form id="uploadPdfForm" enctype="multipart/form-data">
+                                <div class="mb-3">
+                                    <input class="form-control" type="file" id="pdfFile" accept=".pdf">
+                                </div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-upload me-1"></i>Carica
+                                </button>
+                            </form>
+                            <div id="uploadPdfStatus" class="mt-2 alert" style="display: none;"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <button type="submit" class="btn btn-primary">Carica</button>
-        </form>
-        <div id="uploadPdfStatus" class="mt-2"></div>
-    </div>
-
-    <div class="chat-container" id="chatContainer">
-        <!-- I messaggi verranno aggiunti qui dinamicamente -->
-    </div>
-
-    <div class="input-group">
-        <input type="text" class="form-control" id="userInput" placeholder="Scrivi un messaggio...">
-        <button class="btn btn-primary" id="sendButton">Invia</button>
+        </div>
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const chatContainer = document.getElementById('chatContainer');
@@ -86,6 +268,10 @@
         const uploadPdfForm = document.getElementById('uploadPdfForm');
         const uploadExcelStatus = document.getElementById('uploadExcelStatus');
         const uploadPdfStatus = document.getElementById('uploadPdfStatus');
+        const clearChatBtn = document.getElementById('clearChatBtn');
+
+        // Inizializza i tab di Bootstrap
+        const tabEl = document.querySelector('button[data-bs-toggle="tab"]');
 
         // Carica la cronologia della chat all'avvio
         loadChatHistory();
@@ -110,6 +296,21 @@
             uploadPdfFile();
         });
 
+        // Gestione della pulizia della chat
+        clearChatBtn.addEventListener('click', function() {
+            if (confirm('Sei sicuro di voler cancellare tutta la chat?')) {
+                chatContainer.innerHTML = '';
+                // Aggiungi il messaggio di benvenuto
+                const welcomeMessage = document.createElement('div');
+                welcomeMessage.classList.add('message', 'ai-message');
+                welcomeMessage.innerHTML = `
+                    <div>Benvenuto! Carica un file Excel o PDF e poi fammi domande sui dati contenuti.</div>
+                    <div class="sources">Sistema, oggi alle ${new Date().toLocaleTimeString()}</div>
+                `;
+                chatContainer.appendChild(welcomeMessage);
+            }
+        });
+
         function sendMessage() {
             const message = userInput.value.trim();
             if (message === '') return;
@@ -117,6 +318,9 @@
             // Aggiungi il messaggio dell'utente alla chat
             addMessageToChat('user', message);
             userInput.value = '';
+
+            // Mostra l'indicatore di digitazione
+            showTypingIndicator();
 
             // Invia la richiesta al backend
             fetch('http://localhost:8080/info?question=' + encodeURIComponent(message), {
@@ -127,20 +331,45 @@
             })
             .then(response => response.text())
             .then(data => {
+                // Rimuovi l'indicatore di digitazione
+                removeTypingIndicator();
                 // Aggiungi la risposta dell'AI alla chat
                 addMessageToChat('ai', data);
             })
             .catch(error => {
                 console.error('Errore:', error);
+                removeTypingIndicator();
                 addMessageToChat('ai', 'Mi dispiace, si è verificato un errore. Riprova più tardi.');
             });
+        }
+
+        function showTypingIndicator() {
+            const typingDiv = document.createElement('div');
+            typingDiv.id = 'typingIndicator';
+            typingDiv.classList.add('typing-indicator');
+            typingDiv.innerHTML = '<span></span><span></span><span></span>';
+            chatContainer.appendChild(typingDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function removeTypingIndicator() {
+            const typingDiv = document.getElementById('typingIndicator');
+            if (typingDiv) {
+                typingDiv.remove();
+            }
         }
 
         function addMessageToChat(sender, content) {
             const messageDiv = document.createElement('div');
             messageDiv.classList.add('message', sender === 'user' ? 'user-message' : 'ai-message');
-            const dateTime = new Date().toLocaleString();
-            messageDiv.innerHTML = `<div>${content}</div><div class="sources">${dateTime}</div>`;
+
+            // Formatta la data in italiano
+            const now = new Date();
+            const options = { hour: '2-digit', minute: '2-digit' };
+            const formattedTime = now.toLocaleTimeString('it-IT', options);
+
+            // Se il contenuto contiene HTML (come la risposta strutturata), lo preserviamo
+            messageDiv.innerHTML = `<div>${content}</div><div class="sources">${sender === 'user' ? 'Tu' : 'AI'}, oggi alle ${formattedTime}</div>`;
             chatContainer.appendChild(messageDiv);
             chatContainer.scrollTop = chatContainer.scrollHeight;
         }

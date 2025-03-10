@@ -25,7 +25,7 @@ public class GeneratorTools {
 
     }
 
-   // @Tool(description = "Restituisce la data di oggi")
+    @Tool(description = "Restituisce la data di oggi")
     public String getCurrentDate() {
         log.info("start getCurrentDate");
         LocalDate currentDate = LocalDate.now();

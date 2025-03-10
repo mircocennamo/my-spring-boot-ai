@@ -23,7 +23,7 @@ public class FunctionCallingChatConfiguration {
                         new MessageChatMemoryAdvisor(chatMemory()), // chat-memory advisor
                         new QuestionAnswerAdvisor(vectorStore, org.springframework.ai.vectorstore.SearchRequest.builder().build()) // RAG advisor
                 )
-                //.defaultTools(new GeneratorTools())
+                .defaultTools(new GeneratorTools())
                 .build();
     }
 

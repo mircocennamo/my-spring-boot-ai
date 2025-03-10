@@ -1,4 +1,3 @@
-<!-- src/main/resources/templates/index.html -->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -44,17 +43,28 @@
 </head>
 <body>
 <div class="container mt-4">
-    <h1 class="mb-4">Chat AI con RAG per file Excel</h1>
+    <h1 class="mb-4">Chat AI con RAG per file Excel e PDF</h1>
 
     <div class="upload-container">
         <h4>Carica file Excel</h4>
-        <form id="uploadForm" enctype="multipart/form-data">
+        <form id="uploadExcelForm" enctype="multipart/form-data">
             <div class="mb-3">
                 <input class="form-control" type="file" id="excelFile" accept=".xlsx, .xls">
             </div>
             <button type="submit" class="btn btn-primary">Carica</button>
         </form>
-        <div id="uploadStatus" class="mt-2"></div>
+        <div id="uploadExcelStatus" class="mt-2"></div>
+    </div>
+
+    <div class="upload-container">
+        <h4>Carica file PDF</h4>
+        <form id="uploadPdfForm" enctype="multipart/form-data">
+            <div class="mb-3">
+                <input class="form-control" type="file" id="pdfFile" accept=".pdf">
+            </div>
+            <button type="submit" class="btn btn-primary">Carica</button>
+        </form>
+        <div id="uploadPdfStatus" class="mt-2"></div>
     </div>
 
     <div class="chat-container" id="chatContainer">
@@ -72,8 +82,10 @@
         const chatContainer = document.getElementById('chatContainer');
         const userInput = document.getElementById('userInput');
         const sendButton = document.getElementById('sendButton');
-        const uploadForm = document.getElementById('uploadForm');
-        const uploadStatus = document.getElementById('uploadStatus');
+        const uploadExcelForm = document.getElementById('uploadExcelForm');
+        const uploadPdfForm = document.getElementById('uploadPdfForm');
+        const uploadExcelStatus = document.getElementById('uploadExcelStatus');
+        const uploadPdfStatus = document.getElementById('uploadPdfStatus');
 
         // Carica la cronologia della chat all'avvio
         loadChatHistory();
@@ -86,10 +98,16 @@
             }
         });
 
-        // Gestione del caricamento dei file
-        uploadForm.addEventListener('submit', function(e) {
+        // Gestione del caricamento dei file Excel
+        uploadExcelForm.addEventListener('submit', function(e) {
             e.preventDefault();
             uploadExcelFile();
+        });
+
+        // Gestione del caricamento dei file PDF
+        uploadPdfForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            uploadPdfFile();
         });
 
         function sendMessage() {
@@ -101,20 +119,16 @@
             userInput.value = '';
 
             // Invia la richiesta al backend
-            fetch('/api/chat', {
-                method: 'POST',
+            fetch('http://localhost:8080/info?question=' + encodeURIComponent(message), {
+                method: 'GET',
                 headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    content: message,
-                    sender: 'user'
-                })
+                    'Accept': '*/*'
+                }
             })
-            .then(response => response.json())
+            .then(response => response.text())
             .then(data => {
                 // Aggiungi la risposta dell'AI alla chat
-                addMessageToChat('ai', data.content, data.referenceSources);
+                addMessageToChat('ai', data);
             })
             .catch(error => {
                 console.error('Errore:', error);
@@ -122,23 +136,12 @@
             });
         }
 
-        function addMessageToChat(sender, content, sources = []) {
+        function addMessageToChat(sender, content) {
             const messageDiv = document.createElement('div');
             messageDiv.classList.add('message', sender === 'user' ? 'user-message' : 'ai-message');
-
-            messageDiv.textContent = content;
-
-            // Aggiungi le fonti se presenti
-            if (sources && sources.length > 0) {
-                const sourcesDiv = document.createElement('div');
-                sourcesDiv.classList.add('sources');
-                sourcesDiv.textContent = 'Fonti: ' + sources.join(', ');
-                messageDiv.appendChild(sourcesDiv);
-            }
-
+            const dateTime = new Date().toLocaleString();
+            messageDiv.innerHTML = `<div>${content}</div><div class="sources">${dateTime}</div>`;
             chatContainer.appendChild(messageDiv);
-
-            // Scorri verso il basso per visualizzare il messaggio più recente
             chatContainer.scrollTop = chatContainer.scrollHeight;
         }
 
@@ -148,7 +151,7 @@
             .then(messages => {
                 chatContainer.innerHTML = '';
                 messages.forEach(msg => {
-                    addMessageToChat(msg.sender, msg.content, msg.referenceSources);
+                    addMessageToChat(msg.sender, msg.content);
                 });
             })
             .catch(error => {
@@ -161,25 +164,25 @@
             const file = fileInput.files[0];
 
             if (!file) {
-                uploadStatus.textContent = 'Seleziona un file da caricare.';
-                uploadStatus.style.color = 'red';
+                uploadExcelStatus.textContent = 'Seleziona un file da caricare.';
+                uploadExcelStatus.style.color = 'red';
                 return;
             }
 
             const formData = new FormData();
             formData.append('file', file);
 
-            uploadStatus.textContent = 'Caricamento in corso...';
-            uploadStatus.style.color = 'blue';
+            uploadExcelStatus.textContent = 'Caricamento in corso...';
+            uploadExcelStatus.style.color = 'blue';
 
-            fetch('/api/documents/upload', {
+            fetch('http://localhost:8080/uploadExcel', {
                 method: 'POST',
                 body: formData
             })
             .then(response => response.text())
             .then(data => {
-                uploadStatus.textContent = data;
-                uploadStatus.style.color = 'green';
+                uploadExcelStatus.textContent = data;
+                uploadExcelStatus.style.color = 'green';
                 fileInput.value = '';
 
                 // Aggiungi un messaggio di sistema nella chat
@@ -187,8 +190,44 @@
             })
             .catch(error => {
                 console.error('Errore:', error);
-                uploadStatus.textContent = 'Si è verificato un errore durante il caricamento del file.';
-                uploadStatus.style.color = 'red';
+                uploadExcelStatus.textContent = 'Si è verificato un errore durante il caricamento del file.';
+                uploadExcelStatus.style.color = 'red';
+            });
+        }
+
+        function uploadPdfFile() {
+            const fileInput = document.getElementById('pdfFile');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                uploadPdfStatus.textContent = 'Seleziona un file da caricare.';
+                uploadPdfStatus.style.color = 'red';
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            uploadPdfStatus.textContent = 'Caricamento in corso...';
+            uploadPdfStatus.style.color = 'blue';
+
+            fetch('http://localhost:8080/uploadPdf', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.text())
+            .then(data => {
+                uploadPdfStatus.textContent = data;
+                uploadPdfStatus.style.color = 'green';
+                fileInput.value = '';
+
+                // Aggiungi un messaggio di sistema nella chat
+                addMessageToChat('ai', `File "${file.name}" caricato con successo. Ora puoi fare domande sui dati contenuti nel file.`);
+            })
+            .catch(error => {
+                console.error('Errore:', error);
+                uploadPdfStatus.textContent = 'Si è verificato un errore durante il caricamento del file.';
+                uploadPdfStatus.style.color = 'red';
             });
         }
     });

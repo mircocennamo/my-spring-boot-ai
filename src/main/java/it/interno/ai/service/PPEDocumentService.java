@@ -4,7 +4,10 @@ package it.interno.ai.service;
 import it.interno.ai.model.*;
 import it.interno.ai.tools.GeneratorTools;
 import it.interno.ai.utils.ContextFilter;
-import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,13 +17,13 @@ import org.springframework.ai.document.Document;
 import org.springframework.ai.reader.pdf.PagePdfDocumentReader;
 import org.springframework.ai.transformer.splitter.TokenTextSplitter;
 import org.springframework.ai.vectorstore.SearchRequest;
-
 import org.springframework.ai.vectorstore.elasticsearch.ElasticsearchVectorStore;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,6 +40,7 @@ public class PPEDocumentService {
     private final ElasticsearchVectorStore vectorStore;
 
     private static final Logger log = LoggerFactory.getLogger(PPEDocumentService.class);
+    SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
 
 
 
@@ -121,7 +125,7 @@ public class PPEDocumentService {
                 ppe.getUfficio().setDescrizioneUfficio(row.getCell(4).getStringCellValue());
                 Richiesta richiesta = new Richiesta();
                 ppe.setRichiesta(richiesta);
-                ppe.getRichiesta().setDataRichiesta(row.getCell(5).getNumericCellValue() + "");
+                ppe.getRichiesta().setDataRichiesta(dateFormat.format(row.getCell(5).getDateCellValue()));
                 ppe.getRichiesta().setOraRichiesta(row.getCell(6).getStringCellValue());
                 Comandante comandante = new Comandante();
                 ppe.setComandante(comandante);
@@ -213,7 +217,11 @@ public class PPEDocumentService {
 
         String prompt = """
                 Rispondi alla domanda nella sezione "Risposta" utilizzando le informazioni fornite nel contesto.
-                Mostra  i dati recuperati dall'oggetto metadata
+                Mostra  i dati recuperati dall'oggetto metadata del documento.
+                Struttura la risposta in sezioni chiare e distinte e leggibili.
+                Dividi ogni sezione in paragrafi distinti e numerati.
+                Ogni paragrafo deve essere separato da una riga vuota.
+                Concludi la riposta facendo un riepilogo dei punti e fornisci eventuali raccomandazioni o conclusioni finali."
                 
                 Contesto:
                 -----------
@@ -242,13 +250,51 @@ public class PPEDocumentService {
                 
                 """;
 
+        String prompt2 = """
+                "Fornisci una risposta in una struttura HTML dettagliata alla domanda seguente, organizzando il testo in paragrafi distinti e numerati.Rispondi alla domanda utilizzando le informazioni fornite nel contesto.
+                Ogni paragrafo deve essere separato da una riga vuota.
+                Concludi la riposta facendo un riepilogo dei punti e fornisci conclusioni finali.
+                
+                Contesto:
+                -----------
+                {documents}
+                -----------
+                
+                Domanda:
+                -----------
+                {question}
+                -----------
+                
+                Istruzioni:
+                1. Analizza attentamente il contesto fornito e identifica le informazioni più rilevanti.
+                2. Organizza e riassumi i dati  presenti nel contesto.
+                3. Fornisci una risposta dettagliata, facendo riferimento alle informazioni estratte dal contesto.
+                4. Se alcune informazioni non sono chiare o mancanti, specifica eventuali incertezze o richiedi ulteriori dettagli.
+                5. Rispondi in modo chiaro, strutturato e in italiano.
+                
+                Struttura della risposta suddivisa in paragrafi:
+                
+                Dati utente
+                
+                Dati Comandante
+                
+                Dati Applicazione
+                
+                Dati Ufficio
+                
+                Dati Richiesta
+                
+                Dati Motivazione
+                
+                Metadati
+               """;
 
 
 
 
         log.info(
                 "Prompt: {}",
-                prompt
+                prompt2
         );
 
         log.info(
@@ -264,7 +310,7 @@ public class PPEDocumentService {
 
         // Calling the chat model with the question
         String response =  chatClient.prompt()
-                .user(u->u.text(prompt)
+                .user(u->u.text(prompt2)
                         .param("documents", documents)
                         .param("question", question))
                 .call()

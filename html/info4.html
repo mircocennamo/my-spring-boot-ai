@@ -14,12 +14,12 @@
             --user-message-bg: #d1e7ff;
             --ai-message-bg: #f0f0f0;
         }
-
+        
         body {
             background-color: #f9f9f9;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-
+        
         .app-container {
             max-width: 1200px;
             margin: 0 auto;
@@ -28,7 +28,7 @@
             box-shadow: 0 0 20px rgba(0,0,0,0.1);
             border-radius: 10px;
         }
-
+        
         .chat-container {
             height: 60vh;
             overflow-y: auto;
@@ -39,7 +39,7 @@
             background-color: white;
             scroll-behavior: smooth;
         }
-
+        
         .message {
             padding: 12px 18px;
             border-radius: 18px;
@@ -49,31 +49,31 @@
             position: relative;
             animation: fadeIn 0.3s ease-in-out;
         }
-
+        
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-
+        
         .user-message {
             background-color: var(--user-message-bg);
             margin-left: auto;
             border-bottom-right-radius: 5px;
         }
-
+        
         .ai-message {
             background-color: var(--ai-message-bg);
             margin-right: auto;
             border-bottom-left-radius: 5px;
         }
-
+        
         .sources {
             font-size: 0.8rem;
             color: #666;
             margin-top: 8px;
             text-align: right;
         }
-
+        
         .upload-container {
             margin-bottom: 20px;
             padding: 20px;
@@ -82,36 +82,36 @@
             background-color: var(--secondary-color);
             transition: all 0.3s ease;
         }
-
+        
         .upload-container:hover {
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
-
+        
         .input-group {
             margin-top: 20px;
         }
-
+        
         .form-control:focus {
             box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
             border-color: var(--primary-color);
         }
-
+        
         .btn-primary {
             background-color: var(--primary-color);
             border-color: var(--primary-color);
             transition: all 0.3s ease;
         }
-
+        
         .btn-primary:hover {
             background-color: #0b5ed7;
             border-color: #0b5ed7;
             transform: translateY(-2px);
         }
-
+        
         .tabs-container {
             margin-bottom: 20px;
         }
-
+        
         .nav-tabs .nav-link {
             color: #495057;
             border: 1px solid transparent;
@@ -119,21 +119,21 @@
             border-top-right-radius: 0.25rem;
             padding: 10px 20px;
         }
-
+        
         .nav-tabs .nav-link.active {
             color: var(--primary-color);
             background-color: #fff;
             border-color: var(--border-color) var(--border-color) #fff;
             font-weight: bold;
         }
-
+        
         .tab-content {
             padding: 20px;
             border: 1px solid var(--border-color);
             border-top: none;
             border-radius: 0 0 10px 10px;
         }
-
+        
         .risposta-container h2 {
             color: var(--primary-color);
             font-size: 1.2rem;
@@ -142,7 +142,7 @@
             border-bottom: 1px solid var(--border-color);
             padding-bottom: 5px;
         }
-
+        
         .typing-indicator {
             display: inline-block;
             padding: 10px 15px;
@@ -150,7 +150,7 @@
             border-radius: 15px;
             margin-bottom: 10px;
         }
-
+        
         .typing-indicator span {
             height: 8px;
             width: 8px;
@@ -160,21 +160,21 @@
             margin: 0 2px;
             animation: typing 1s infinite;
         }
-
+        
         .typing-indicator span:nth-child(2) {
             animation-delay: 0.2s;
         }
-
+        
         .typing-indicator span:nth-child(3) {
             animation-delay: 0.4s;
         }
-
+        
         @keyframes typing {
             0% { transform: translateY(0); }
             50% { transform: translateY(-5px); }
             100% { transform: translateY(0); }
         }
-
+        
         .clear-chat {
             margin-bottom: 10px;
             text-align: right;
@@ -187,7 +187,7 @@
         <i class="fas fa-robot text-primary me-2"></i>
         Chat AI con RAG per file Excel e PDF
     </h1>
-
+    
     <div class="tabs-container">
         <ul class="nav nav-tabs" id="myTab" role="tablist">
             <li class="nav-item" role="presentation">
@@ -269,13 +269,13 @@
         const uploadExcelStatus = document.getElementById('uploadExcelStatus');
         const uploadPdfStatus = document.getElementById('uploadPdfStatus');
         const clearChatBtn = document.getElementById('clearChatBtn');
-
+        
         // Inizializza i tab di Bootstrap
         const tabEl = document.querySelector('button[data-bs-toggle="tab"]');
-
+        
         // Carica la cronologia della chat all'avvio
         loadChatHistory();
-
+        
         // Gestione dell'invio dei messaggi
         sendButton.addEventListener('click', sendMessage);
         userInput.addEventListener('keypress', function(e) {
@@ -283,19 +283,19 @@
                 sendMessage();
             }
         });
-
+        
         // Gestione del caricamento dei file Excel
         uploadExcelForm.addEventListener('submit', function(e) {
             e.preventDefault();
             uploadExcelFile();
         });
-
+        
         // Gestione del caricamento dei file PDF
         uploadPdfForm.addEventListener('submit', function(e) {
             e.preventDefault();
             uploadPdfFile();
         });
-
+        
         // Gestione della pulizia della chat
         clearChatBtn.addEventListener('click', function() {
             if (confirm('Sei sicuro di voler cancellare tutta la chat?')) {
@@ -310,18 +310,18 @@
                 chatContainer.appendChild(welcomeMessage);
             }
         });
-
+        
         function sendMessage() {
             const message = userInput.value.trim();
             if (message === '') return;
-
+            
             // Aggiungi il messaggio dell'utente alla chat
             addMessageToChat('user', message);
             userInput.value = '';
-
+            
             // Mostra l'indicatore di digitazione
             showTypingIndicator();
-
+            
             // Invia la richiesta al backend
             fetch('http://localhost:8080/info?question=' + encodeURIComponent(message), {
                 method: 'GET',
@@ -342,7 +342,7 @@
                 addMessageToChat('ai', 'Mi dispiace, si è verificato un errore. Riprova più tardi.');
             });
         }
-
+        
         function showTypingIndicator() {
             const typingDiv = document.createElement('div');
             typingDiv.id = 'typingIndicator';
@@ -351,41 +351,76 @@
             chatContainer.appendChild(typingDiv);
             chatContainer.scrollTop = chatContainer.scrollHeight;
         }
-
+        
         function removeTypingIndicator() {
             const typingDiv = document.getElementById('typingIndicator');
             if (typingDiv) {
                 typingDiv.remove();
             }
         }
-
+        
         function addMessageToChat(sender, content) {
             const messageDiv = document.createElement('div');
             messageDiv.classList.add('message', sender === 'user' ? 'user-message' : 'ai-message');
-
+            
             // Formatta la data in italiano
             const now = new Date();
             const options = { hour: '2-digit', minute: '2-digit' };
             const formattedTime = now.toLocaleTimeString('it-IT', options);
-
+            
             // Se il contenuto contiene HTML (come la risposta strutturata), lo preserviamo
-            messageDiv.innerHTML = `<div>${content}</div><div class="sources">${sender === 'user' ? 'Tu' : 'AI'}, oggi alle ${formattedTime}</div>`;
-            chatContainer.appendChild(messageDiv);
+            messageDiv.innerHTML = `<div>${content}</div><div class="sources">${sender === 'user' ? 'Tu' : 'AI'}, oggi alle ${formattedTime}</div>`;        
+		chatContainer.appendChild(messageDiv);
             chatContainer.scrollTop = chatContainer.scrollHeight;
+            
+            // Salva il messaggio nella cronologia locale
+            saveMessageToLocalStorage(sender, content);
         }
-
-        function loadChatHistory() {
-            fetch('/api/chat/history')
-            .then(response => response.json())
-            .then(messages => {
-                chatContainer.innerHTML = '';
-                messages.forEach(msg => {
-                    addMessageToChat(msg.sender, msg.content);
-                });
-            })
-            .catch(error => {
-                console.error('Errore nel caricamento della cronologia:', error);
+        
+        function saveMessageToLocalStorage(sender, content) {
+            let chatHistory = JSON.parse(localStorage.getItem('chatHistory') || '[]');
+            chatHistory.push({
+                sender: sender,
+                content: content,
+                timestamp: new Date().toISOString()
             });
+            // Limita la cronologia a 50 messaggi
+            if (chatHistory.length > 50) {
+                chatHistory = chatHistory.slice(chatHistory.length - 50);
+            }
+            localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+        }
+        
+        function loadChatHistory() {
+            // Prima controlla se c'è una cronologia locale
+            const chatHistory = JSON.parse(localStorage.getItem('chatHistory') || '[]');
+            
+            if (chatHistory.length > 0) {
+                chatContainer.innerHTML = '';
+                chatHistory.forEach(msg => {
+                    const messageDiv = document.createElement('div');
+                    messageDiv.classList.add('message', msg.sender === 'user' ? 'user-message' : 'ai-message');
+                    
+                    // Formatta la data in italiano
+                    const msgDate = new Date(msg.timestamp);
+                    const options = { hour: '2-digit', minute: '2-digit' };
+                    const formattedTime = msgDate.toLocaleTimeString('it-IT', options);
+                    
+                    messageDiv.innerHTML = `<div>${msg.content}</div><div class="sources">${msg.sender === 'user' ? 'Tu' : 'AI'}, ${formattedTime}</div>`;
+                    chatContainer.appendChild(messageDiv);
+                });
+            } else {
+                // Aggiungi un messaggio di benvenuto se non c'è cronologia
+                const welcomeMessage = document.createElement('div');
+                welcomeMessage.classList.add('message', 'ai-message');
+                welcomeMessage.innerHTML = `
+                    <div>Benvenuto! Carica un file Excel o PDF e poi fammi domande sui dati contenuti.</div>
+                    <div class="sources">Sistema, oggi alle ${new Date().toLocaleTimeString('it-IT')}</div>
+                `;
+                chatContainer.appendChild(welcomeMessage);
+            }
+            
+            chatContainer.scrollTop = chatContainer.scrollHeight;
         }
 
         function uploadExcelFile() {
@@ -393,34 +428,40 @@
             const file = fileInput.files[0];
 
             if (!file) {
-                uploadExcelStatus.textContent = 'Seleziona un file da caricare.';
-                uploadExcelStatus.style.color = 'red';
+                uploadExcelStatus.innerHTML = '<div class="alert alert-danger">Seleziona un file da caricare.</div>';
+                uploadExcelStatus.style.display = 'block';
                 return;
             }
 
             const formData = new FormData();
             formData.append('file', file);
 
-            uploadExcelStatus.textContent = 'Caricamento in corso...';
-            uploadExcelStatus.style.color = 'blue';
+            uploadExcelStatus.innerHTML = '<div class="alert alert-info">Caricamento in corso... <div class="spinner-border spinner-border-sm" role="status"></div></div>';
+            uploadExcelStatus.style.display = 'block';
 
             fetch('http://localhost:8080/uploadExcel', {
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.text())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Errore nel caricamento del file');
+                }
+                return response.text();
+            })
             .then(data => {
-                uploadExcelStatus.textContent = data;
-                uploadExcelStatus.style.color = 'green';
+                uploadExcelStatus.innerHTML = '<div class="alert alert-success">File caricato con successo!</div>';
                 fileInput.value = '';
 
                 // Aggiungi un messaggio di sistema nella chat
-                addMessageToChat('ai', `File "${file.name}" caricato con successo. Ora puoi fare domande sui dati contenuti nel file.`);
+                addMessageToChat('ai', `File Excel "${file.name}" caricato con successo. Ora puoi fare domande sui dati contenuti nel file.`);
+                
+                // Passa automaticamente alla tab della chat
+                document.getElementById('chat-tab').click();
             })
             .catch(error => {
                 console.error('Errore:', error);
-                uploadExcelStatus.textContent = 'Si è verificato un errore durante il caricamento del file.';
-                uploadExcelStatus.style.color = 'red';
+                uploadExcelStatus.innerHTML = '<div class="alert alert-danger">Si è verificato un errore durante il caricamento del file.</div>';
             });
         }
 
@@ -429,34 +470,40 @@
             const file = fileInput.files[0];
 
             if (!file) {
-                uploadPdfStatus.textContent = 'Seleziona un file da caricare.';
-                uploadPdfStatus.style.color = 'red';
+                uploadPdfStatus.innerHTML = '<div class="alert alert-danger">Seleziona un file da caricare.</div>';
+                uploadPdfStatus.style.display = 'block';
                 return;
             }
 
             const formData = new FormData();
             formData.append('file', file);
 
-            uploadPdfStatus.textContent = 'Caricamento in corso...';
-            uploadPdfStatus.style.color = 'blue';
+            uploadPdfStatus.innerHTML = '<div class="alert alert-info">Caricamento in corso... <div class="spinner-border spinner-border-sm" role="status"></div></div>';
+            uploadPdfStatus.style.display = 'block';
 
             fetch('http://localhost:8080/uploadPdf', {
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.text())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Errore nel caricamento del file');
+                }
+                return response.text();
+            })
             .then(data => {
-                uploadPdfStatus.textContent = data;
-                uploadPdfStatus.style.color = 'green';
+                uploadPdfStatus.innerHTML = '<div class="alert alert-success">File caricato con successo!</div>';
                 fileInput.value = '';
 
                 // Aggiungi un messaggio di sistema nella chat
-                addMessageToChat('ai', `File "${file.name}" caricato con successo. Ora puoi fare domande sui dati contenuti nel file.`);
+                addMessageToChat('ai', `File PDF "${file.name}" caricato con successo. Ora puoi fare domande sui dati contenuti nel file.`);
+                
+                // Passa automaticamente alla tab della chat
+                document.getElementById('chat-tab').click();
             })
             .catch(error => {
                 console.error('Errore:', error);
-                uploadPdfStatus.textContent = 'Si è verificato un errore durante il caricamento del file.';
-                uploadPdfStatus.style.color = 'red';
+                uploadPdfStatus.innerHTML = '<div class="alert alert-danger">Si è verificato un errore durante il caricamento del file.</div>';
             });
         }
     });

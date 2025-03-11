@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import static it.interno.ai.utils.BeanToDocumentConverter.convertToDocumentList;
@@ -65,7 +64,7 @@ public class PPEDocumentService {
     }
 
     public void ingestExcel(Resource resource) throws IOException {
-        List<Utente> documents = readExcelFile2(resource);
+        List<Utente> documents = readExcelFile(resource);
 
         // Sending batch of documents to vector store
         // applying tokenizer
@@ -75,27 +74,7 @@ public class PPEDocumentService {
      }
 
 
-
-    public List<Document> readExcelFile(Resource resource) throws IOException {
-        List<Document> documents = new ArrayList<>();
-        try (InputStream inputStream = resource.getInputStream();
-             Workbook workbook = new XSSFWorkbook(inputStream)) {
-
-            Sheet sheet = workbook.getSheetAt(0);
-            for (Row row : sheet) {
-                StringBuilder content = new StringBuilder();
-                for (Cell cell : row) {
-                    content.append(cell.toString()).append(" ");
-                }
-                Document document = new Document(content.toString().trim());
-                documents.add(document);
-            }
-        }
-        return documents;
-    }
-
-
-    public List<Utente> readExcelFile2(Resource resource) throws IOException {
+    public List<Utente> readExcelFile(Resource resource) throws IOException {
         List<Utente> results = new ArrayList<>();
         log.info("Iniziando la lettura del file Excel: {}", resource.getFilename());
 
@@ -252,10 +231,9 @@ public class PPEDocumentService {
         //1. Querying the vector store for documents related to the question
         List<Document> vectorStoreResult =
                vectorStore.similaritySearch(SearchRequest.builder().query(question)
-                       // .topK(5)
-                      // .similarityThreshold(0.6)
-                        //.topK(50).similarityThreshold(1)
-                       .build());
+                        //.topK(10)
+                       //.similarityThreshold(0.7)
+                        .build());
 
         log.info(
                 "vectorStoreResult: {}",
@@ -296,42 +274,9 @@ public class PPEDocumentService {
         //        """;
 
 
-        String prompt = """
-                Rispondi alla domanda nella sezione "Risposta" utilizzando le informazioni fornite nel contesto.
-                Mostra  i dati recuperati dall'oggetto metadata del documento.
-                Struttura la risposta in sezioni chiare e distinte e leggibili.
-                Dividi ogni sezione in paragrafi distinti e numerati.
-                Ogni paragrafo deve essere separato da una riga vuota.
-                Concludi la riposta facendo un riepilogo dei punti e fornisci eventuali raccomandazioni o conclusioni finali."
-                
-                Contesto:
-                -----------
-                {documents}
-                -----------
-                
-                Domanda:
-                -----------
-                {question}
-                -----------
-                
-                Istruzioni:
-                1. Analizza attentamente il contesto fornito e identifica le informazioni più rilevanti.
-                2. Organizza e riassumi i dati  presenti nel contesto.
-                3. Fornisci una risposta dettagliata, facendo riferimento alle informazioni estratte dal contesto.
-                4. Se alcune informazioni non sono chiare o mancanti, specifica eventuali incertezze o richiedi ulteriori dettagli.
-                5. Rispondi in modo chiaro, strutturato e in italiano.
-                
-                Risposta:
-                
-                
-                
-                
-                
-                
-                
-                """;
+        
 
-        String prompt2 = """ 
+        String prompt = """ 
                 Fornisci una risposta strutturata e dettagliata alla domanda dell'utente, basandoti esclusivamente sulle informazioni presenti nel contesto fornito.
                 
                 Contesto:
@@ -386,7 +331,7 @@ public class PPEDocumentService {
 
         log.info(
                 "Prompt: {}",
-                prompt2
+                prompt
         );
 
         log.info(
@@ -402,7 +347,7 @@ public class PPEDocumentService {
 
         // Calling the chat model with the question
         String response =  chatClient.prompt()
-                .user(u->u.text(prompt2)
+                .user(u->u.text(prompt)
                         .param("documents", documents)
                         .param("question", question))
                 .call()
